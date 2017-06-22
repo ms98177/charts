@@ -1,133 +1,91 @@
-var task = {
-  "person": "Jeremy",
-  "description": "paint the house",
-  "difficulty": "easy"
-}
-
-// Loop through an object! "key" is temporary variable representing key of key: value pair
-for(let key in task){
-  // console.log(key);
-  // console.log(typeof(house[key]));
-}
-
-var taskList = {
-  tasks: [task]
-}
-
-// prints to HTML (practice from slide 41)
-function drawList() {
-  // Select #list-container element from HTML (add it to HTML first!)
-  var parent = document.getElementById("list-container")
-
-  // Clear out existing contents
-  parent.innerHTML = ""
-
-  // Create a <ul> node
-  var ul = document.createElement("ul")
-  // console.log(task.person + " needs to " + task.description)
-
-  for(var i =0; i<taskList.tasks.length; i++){
-    console.log(taskList.tasks[i].person +
-                " needs to " +
-                taskList.tasks[i].description +
-                "(" + taskList.tasks[i].difficulty +
-                ")")
-    // Create an <li> node
-    var li = document.createElement("li")
-
-    // Add the person string to the li
-    li.innerHTML = taskList.tasks[i].person
-
-    // Append li to ul
-    ul.appendChild(li)
-  }
-
-  // Append the ul to the #list-container
-  parent.appendChild(ul)
-}
-
-
-// Form submit handler
-function taskBuilder(){
-  console.log("TODO list")
-  event.preventDefault();
-
-  var form = document.querySelector("form");
-
-  // Create a new house object with form values (just one for right now)
-  var newTask = { person: form.person.value,
-                  description: form.description.value,
-                  difficulty: form.difficulty.value
-                  }
-
-  // Insert new house object into neighborhood.houses
-   taskList.tasks.push(newTask)
-
-  // Trigger printing the list to page
-  drawList();
-}
-
-// Will run after all HTML is done rendering
-window.onload = function(){
-  // Call this function
-  drawList();
-
-  // Select the form, attach houseBuilder as onSubmit handler
-  var form = document.querySelector("form");
-  form.onsubmit = taskBuilder;
-
-
-  // Get all the <p> tags on the page, print their contents to console
-  // (practice from slide 25)
-  var paras = document.querySelectorAll('p');
-  for(var i=0; i<paras.length; i++){
-    // console.log(paras[i]);
-  }
-
-  // Select the <h1> and add class of "bright" to it
-  // (practice from slide 32)
-  var headline = document.querySelector('h1');
-  headline.classList.add("bright");
-
-  // Practicing creating & appending new HTML nodes
-  var div = document.createElement("div");
-  var p = document.createElement("p");
-  p.innerHTML = "Easier to read text!";
-  var text = document.createTextNode("This is text");
-  p.appendChild(text);
-  div.appendChild(p);
-
-  var parent = document.getElementById("parent");
-  parent.appendChild(div);
-}
 
 // Chart code
-google.charts.load('current', {'packages':['bar']});
-      google.charts.setOnLoadCallback(drawStuff);
+// Load the Visualization API and the corechart package.
+// We need this for all chart library usage in this file.
+google.charts.load('current', {'packages':['corechart']});
 
-      function drawStuff() {
-        var data = new google.visualization.arrayToDataTable([
-          ['Person', 'Number of Tasks'],
-          ["Jeremy", 5],
-          ["Rosa", 4],
-          ["Raquel", 4],
-        ]);
+// Set a callback to run when the Google Visualization API is loaded- trigger drawing the bar chart
+google.charts.setOnLoadCallback(drawBasic);
 
-        var options = {
-          width: 600,
-          legend: { position: 'none' },
-          chart: {
-            title: 'Task Distribution Chart',
-            subtitle: 'number of tasks per person' },
-          axes: {
-            x: {
-              0: { side: 'top', label: 'People'} // Top x-axis.
-            }
-          },
-          bar: { groupWidth: "90%" }
-        };
+// Hold all our count data in key/value format so it's easy to access
+var taskCounter = {
+  Jeremy: 0,
+  Rosa: 0,
+  Raquel: 0
+}
 
-        var chart = new google.charts.Bar(document.getElementById('top_x_div'));
-        // Convert the Classic options to Material options.
-        chart.draw(data, google.charts.Bar.convertOptions(options));
-      };
+// Assign click handlers to each of the voting buttons
+window.onload = function(){
+  // REVIEW: Could we instead select by element type "button",
+  // since we're assigning same click handler for all of them??
+  document.getElementById("Jeremy").onclick = vote;
+  document.getElementById("Rosa").onclick = vote;
+  document.getElementById("Raquel").onclick = vote;
+
+}
+
+// The click handler function
+function vote(){
+  // "this" refers to DOM element that triggered this handler,
+  // in this case the button, which has an id that perfectly matches our counter's keys!
+  console.log(this.id)
+  // Update count for the selected topping
+  taskCounter[this.id] = taskCounter[this.id] + 1;
+  // Redraw the chart
+  drawBasic();
+}
+
+// Draws a bar chart
+// Documentation: https://developers.google.com/chart/interactive/docs/gallery/columnchart
+function drawBasic() {
+      var data = new google.visualization.DataTable();
+      data.addColumn('string', 'Task');
+      data.addColumn('number', 'Tasks');
+
+      // Numeric values for rows are pulled from our global variable that holds counts for each topping
+      data.addRows([
+        ['Jeremy', taskCounter.Jeremy],
+        ['Rosa', taskCounter.Rosa],
+        ['Raquel', taskCounter.Raquel]
+      ]);
+
+      var options = {
+        title: 'Task Assignments',
+        hAxis: {
+          title: 'Tasks'
+        },
+        vAxis: {
+          title: 'Tasks Assigned'
+        }
+      };
+
+      var chart = new google.visualization.ColumnChart(
+        document.getElementById('chart_div'));
+
+      chart.draw(data, options);
+    }
+
+// Draws a donut chart- not currently being used
+// Documentation: https://developers.google.com/chart/interactive/docs/gallery/piechart
+function drawChart() {
+
+  // Create the data table.
+  var data = new google.visualization.DataTable();
+  data.addColumn('string', 'Tasks');
+  data.addColumn('number', 'Tasks Assigned');
+  data.addRows([
+    ['Jeremy', 0],
+    ['Rosa', 0],
+    ['Raquel', 0]
+  ]);
+
+  // Set chart options
+  var options = {'title':'Tasks Assignments',
+                 'width':400,
+                 'height':300,
+                  pieHole: 0.4};
+
+  // Instantiate and draw our chart, passing in some options.
+  var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
+  chart.draw(data, options);
+}
